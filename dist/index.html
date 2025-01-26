@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>Spanish Vocab</title>
+  
+
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>David's Spanish Vocabulary</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .floating-buttons {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .floating-buttons button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            font-size: 14px;
+        }
+        .floating-buttons button:hover {
+            background-color: #0056b3;
+        }
+        .hidden {
+            display: none;
+        }
+        .pagination {
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+        }
+        .pagination button {
+            padding: 5px 10px;
+            border: 1px solid #ccc;
+            background-color: #f4f4f4;
+            cursor: pointer;
+        }
+        .pagination button.active {
+            background-color: #007bff;
+            color: white;
+        }
+        .pagination button:hover {
+            background-color: #ddd;
+        }
+    </style>
+</head>
+<body>
+    <h1>David's Spanish</h1>
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th class="spanish">Spanish</th>
+                <th class="english">English</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Table rows will be populated dynamically -->
+        </tbody>
+    </table>
+
+    <div class="pagination" id="pagination">
+        <!-- Pagination buttons will be populated dynamically -->
+    </div>
+
+    <!-- Floating buttons -->
+    <div class="floating-buttons">
+        <button id="soloButton">Solo</button>
+        <button id="toggleColumnButton" class="hidden">ENG</button>
+    </div>
+
+    <script>
+        let soloActive = false;
+        let showSpanish = true;
+        let currentPage = 1;
+        const rowsPerPage = 10;
+        let tableData = [];
+
+        function loadTextFile() {
+            const url = 'https://dl.dropboxusercontent.com/scl/fi/zne5f09sjtxqft479zz62/SpanishVocab.txt?rlkey=0eumq0aeobawp2hsh5m0gayxn&st=5q0bouyw&dl=0'; // Path to the uploaded file
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    const rows = data.split('\n'); // Split into lines
+                    tableData = rows.map(row => {
+                        const [col1, col2] = row.split('|');
+                        return {
+                            spanish: formatText(col1?.trim()),
+                            english: formatText(col2?.trim())
+                        };
+                    }).filter(row => row.spanish && row.english);
+
+                    renderTable();
+                    renderPagination();
+                })
+                .catch(error => {
+                    console.error('Error fetching the file:', error);
+                    const tableBody = document.querySelector('#dataTable tbody');
+                    tableBody.innerHTML = '<tr><td colspan="2">Failed to load the text file.</td></tr>';
+                });
+        }
+
+        function formatText(text) {
+            if (!text) return '';
+            return text.replace(/<([^>]+)>/g, '<b>$1</b>'); // Replace <text> with bold text
+        }
+
+        function renderTable() {
+            const tableBody = document.querySelector('#dataTable tbody');
+            tableBody.innerHTML = ''; // Clear existing rows
+
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            const rows = tableData.slice(start, end);
+
+            rows.forEach(row => {
+                const tableRow = `
+                    <tr>
+                        <td class="spanish">${row.spanish}</td>
+                        <td class="english">${row.english}</td>
+                    </tr>
+                `;
+                tableBody.innerHTML += tableRow;
+            });
+        }
+
+        function renderPagination() {
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = ''; // Clear existing buttons
+
+            const totalPages = Math.ceil(tableData.length / rowsPerPage);
+            const maxVisiblePages = 4;
+            const startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+            // Add "Previous" button
+            const prevButton = document.createElement('button');
+            prevButton.textContent = '←';
+            prevButton.disabled = currentPage === 1;
+            prevButton.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderTable();
+                    renderPagination();
+                }
+            });
+            pagination.appendChild(prevButton);
+
+            // Add page buttons
+            for (let i = startPage; i <= endPage; i++) {
+                const button = document.createElement('button');
+                button.textContent = i;
+                button.classList.toggle('active', i === currentPage);
+                button.addEventListener('click', () => {
+                    currentPage = i;
+                    renderTable();
+                    renderPagination();
+                });
+                pagination.appendChild(button);
+            }
+
+            // Add "Next" button
+            const nextButton = document.createElement('button');
+            nextButton.textContent = '→';
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderTable();
+                    renderPagination();
+                }
+            });
+            pagination.appendChild(nextButton);
+        }
+
+        function toggleSoloMode() {
+            soloActive = !soloActive;
+
+            const toggleColumnButton = document.getElementById('toggleColumnButton');
+            toggleColumnButton.classList.toggle('hidden', !soloActive);
+
+            if (!soloActive) {
+                // Reset to show both columns when Solo is deactivated
+                document.querySelectorAll('.spanish, .english').forEach(col => col.style.display = '');
+                return;
+            }
+
+            // Default to showing Spanish column and hiding English column
+            showSpanish = true;
+            updateColumnVisibility();
+        }
+
+        function updateColumnVisibility() {
+            const toggleColumnButton = document.getElementById('toggleColumnButton');
+            if (showSpanish) {
+                toggleColumnButton.textContent = 'ENG';
+                document.querySelectorAll('.spanish').forEach(col => col.style.display = '');
+                document.querySelectorAll('.english').forEach(col => col.style.display = 'none');
+            } else {
+                toggleColumnButton.textContent = 'SPAN';
+                document.querySelectorAll('.spanish').forEach(col => col.style.display = 'none');
+                document.querySelectorAll('.english').forEach(col => col.style.display = '');
+            }
+        }
+
+        // Add event listeners for buttons
+        document.getElementById('soloButton').addEventListener('click', toggleSoloMode);
+        document.getElementById('toggleColumnButton').addEventListener('click', () => {
+            showSpanish = !showSpanish;
+            updateColumnVisibility();
+        });
+
+        // Load the table on page load
+        window.onload = loadTextFile;
+    </script>
+</body>
+</html>
+<!-- partial -->
+  
+</body>
+</html>
