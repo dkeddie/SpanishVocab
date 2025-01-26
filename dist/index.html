@@ -74,10 +74,29 @@
         .pagination button:hover {
             background-color: #ddd;
         }
+        .reorder-button {
+            margin-bottom: 10px;
+            cursor: pointer;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .reorder-button:hover {
+            background-color: #0056b3;
+        }
+        .spanish, .english {
+            width: 50%;
+        }
     </style>
 </head>
 <body>
     <h1>David's Spanish</h1>
+
+    <button class="reorder-button" id="reorderButton">Reorder: Newest to Oldest</button>
+
     <table id="dataTable">
         <thead>
             <tr>
@@ -97,13 +116,14 @@
     <!-- Floating buttons -->
     <div class="floating-buttons">
         <button id="soloButton">Solo</button>
-        <button id="toggleColumnButton" class="hidden">ENG</button>
+        <button id="toggleColumnButton" class="hidden">EN</button>
     </div>
 
     <script>
         let soloActive = false;
         let showSpanish = true;
         let currentPage = 1;
+        let ascendingOrder = false; // Default sorting is newest to oldest
         const rowsPerPage = 10;
         let tableData = [];
 
@@ -119,13 +139,19 @@
                 })
                 .then(data => {
                     const rows = data.split('\n'); // Split into lines
-                    tableData = rows.map(row => {
-                        const [col1, col2] = row.split('|');
-                        return {
-                            spanish: formatText(col1?.trim()),
-                            english: formatText(col2?.trim())
-                        };
-                    }).filter(row => row.spanish && row.english);
+                    tableData = rows
+                        .map(row => {
+                            if (row.startsWith('XX')) return null; // Exclude rows starting with XX
+
+                            const [col1, col2, col3] = row.split('|');
+                            return {
+                                spanish: formatText(col1?.trim()),
+                                english: formatText(col2?.trim()),
+                                date: col3?.trim() || ''
+                            };
+                        })
+                        .filter(row => row && row.spanish && row.english) // Remove invalid rows
+                        .sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by newest to oldest
 
                     renderTable();
                     renderPagination();
@@ -159,6 +185,8 @@
                 `;
                 tableBody.innerHTML += tableRow;
             });
+
+            if (soloActive) updateColumnVisibility();
         }
 
         function renderPagination() {
@@ -230,14 +258,22 @@
         function updateColumnVisibility() {
             const toggleColumnButton = document.getElementById('toggleColumnButton');
             if (showSpanish) {
-                toggleColumnButton.textContent = 'ENG';
+                toggleColumnButton.textContent = 'EN';
                 document.querySelectorAll('.spanish').forEach(col => col.style.display = '');
                 document.querySelectorAll('.english').forEach(col => col.style.display = 'none');
             } else {
-                toggleColumnButton.textContent = 'SPAN';
+                toggleColumnButton.textContent = 'SP';
                 document.querySelectorAll('.spanish').forEach(col => col.style.display = 'none');
                 document.querySelectorAll('.english').forEach(col => col.style.display = '');
             }
+        }
+
+        function toggleOrder() {
+            ascendingOrder = !ascendingOrder;
+            tableData.sort((a, b) => ascendingOrder ? new Date(a.date) - new Date(b.date) : new Date(b.date) - new Date(a.date));
+            document.getElementById('reorderButton').textContent = ascendingOrder ? 'Reorder: Oldest to Newest' : 'Reorder: Newest to Oldest';
+            renderTable();
+            renderPagination();
         }
 
         // Add event listeners for buttons
@@ -246,6 +282,7 @@
             showSpanish = !showSpanish;
             updateColumnVisibility();
         });
+        document.getElementById('reorderButton').addEventListener('click', toggleOrder);
 
         // Load the table on page load
         window.onload = loadTextFile;
