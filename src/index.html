@@ -25,6 +25,12 @@
         th {
             background-color: #f4f4f4;
         }
+        th:first-child, td:first-child {
+            width: auto;
+            max-width: 50px;
+            text-align: center;
+            white-space: nowrap; /* Prevents wrapping of content */
+        }
         .floating-buttons {
             position: fixed;
             bottom: 20px;
@@ -83,20 +89,13 @@
             }
         }
         .spanish, .english {
-            width: 50%;
+            max-width: 50%;
         }
-.material-symbols-outlined {
-  font-variation-settings:
-  'FILL' 0,
-  'wght' 400,
-  'GRAD' 0,
-  'opsz' 24
-}
     </style>
 </head>
 <body>
     <h1>David's Spanish
-        <img class="reorder-icon" id="reorderIcon" src="https://github.com/dkeddie/SpanishVocab/blob/main/images/swap_vert.png" alt="Sort Icon" height="24" width="24">
+        <img class="reorder-icon" id="reorderIcon" src="https://github.com/dkeddie/SpanishVocab/blob/main/images/swap_vert.png?raw=true" alt="Sort Icon" height="24" width="24">
     </h1>
 
     <table id="dataTable">
