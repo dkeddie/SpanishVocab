@@ -3,21 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=swap_vert" />
     <title>David's Spanish Vocabulary</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             padding: 20px;
+            text-align: center;
         }
         table {
             width: 100%;
+            max-width: 780px;
+            margin: 20px auto;
             border-collapse: collapse;
-            margin-top: 20px;
         }
         th, td {
             border: 1px solid #ccc;
             padding: 8px;
-            text-align: left;
+            text-align: center;
         }
         th {
             background-color: #f4f4f4;
@@ -64,32 +67,42 @@
         .pagination button:hover {
             background-color: #ddd;
         }
-        .reorder-button {
-            margin-bottom: 10px;
+        .reorder-icon {
+            display: inline-block;
+            margin-left: 10px;
+            vertical-align: middle;
             cursor: pointer;
-            padding: 10px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 14px;
+            color: lightgray;
         }
-        .reorder-button:hover {
-            background-color: #0056b3;
+        .reorder-icon:hover {
+            color: gray;
+        }
+        @media (min-width: 800px) {
+            table {
+                width: auto;
+            }
         }
         .spanish, .english {
             width: 50%;
         }
+.material-symbols-outlined {
+  font-variation-settings:
+  'FILL' 0,
+  'wght' 400,
+  'GRAD' 0,
+  'opsz' 24
+}
     </style>
 </head>
 <body>
-    <h1>David's Spanish</h1>
-
-    <button class="reorder-button" id="reorderButton">Reorder: Newest to Oldest</button>
+    <h1>David's Spanish
+        <img class="reorder-icon" id="reorderIcon" src="https://github.com/dkeddie/SpanishVocab/blob/main/images/swap_vert.png" alt="Sort Icon" height="24" width="24">
+    </h1>
 
     <table id="dataTable">
         <thead>
             <tr>
+                <th>#</th>
                 <th class="spanish">Spanish</th>
                 <th class="english">English</th>
             </tr>
@@ -130,7 +143,7 @@
                 .then(data => {
                     const rows = data.split('\n'); // Split into lines
                     tableData = rows
-                        .map(row => {
+                        .map((row, index) => {
                             if (row.startsWith('XX')) return null; // Exclude rows starting with XX
 
                             const [col1, col2, col3] = row.split('|');
@@ -149,7 +162,7 @@
                 .catch(error => {
                     console.error('Error fetching the file:', error);
                     const tableBody = document.querySelector('#dataTable tbody');
-                    tableBody.innerHTML = '<tr><td colspan="2">Failed to load the text file.</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="3">Failed to load the text file.</td></tr>';
                 });
         }
 
@@ -166,9 +179,10 @@
             const end = start + rowsPerPage;
             const rows = tableData.slice(start, end);
 
-            rows.forEach(row => {
+            rows.forEach((row, index) => {
                 const tableRow = `
                     <tr>
+                        <td>${start + index + 1}</td>
                         <td class="spanish">${row.spanish}</td>
                         <td class="english">${row.english}</td>
                     </tr>
@@ -261,7 +275,6 @@
         function toggleOrder() {
             ascendingOrder = !ascendingOrder;
             tableData.sort((a, b) => ascendingOrder ? new Date(a.date) - new Date(b.date) : new Date(b.date) - new Date(a.date));
-            document.getElementById('reorderButton').textContent = ascendingOrder ? 'Reorder: Oldest to Newest' : 'Reorder: Newest to Oldest';
             renderTable();
             renderPagination();
         }
@@ -272,7 +285,7 @@
             showSpanish = !showSpanish;
             updateColumnVisibility();
         });
-        document.getElementById('reorderButton').addEventListener('click', toggleOrder);
+        document.getElementById('reorderIcon').addEventListener('click', toggleOrder);
 
         // Load the table on page load
         window.onload = loadTextFile;
